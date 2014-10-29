@@ -1,89 +1,107 @@
-Documentation
-IRC in Practice
+== Common Recieved Messages ==
 
-Common recieves:
-Nick = User who the message is from
+Server = Server who sent the message
+Nick = A User who the message is from
 Name = Settable by user, set in the USER command
-host = ISP host
+Host = Host Mask (Can be your IP or something that represents it)
 
-~~~~PRIVMSG~~~~
-You recieve this when someone has sent a message in a channel,
-gives you there Nick, host, the channel it was said in and the message.
+Any 3 digit Code:
+    Contains information based on various events
+    Check https://www.alien.net.au/irc/irc2numerics.html for specifics
 
-SYNTAX:
-:Nick!Name@host PRIVMSG #Channel :Message
+    SYNTAXES:
+        :Server ### Recipient
+        :Server ### Recipient :Info
+        :Server ### Recipient Info :Info
 
-EXAMPLE:
-:Chip!Chip@OMN-8243F63D.dsl.bell.ca PRIVMSG #Chip :Hey guy's
-Would be a message from Chip to say 'Hey guy's' in the channel #Chip
+    EXAMPLES:
+        :hobana.freenode.net 001 Au3Bot :Welcome to the freenode Internet Relay Chat Network Au3Bot
+        :hobana.freenode.net 002 Au3Bot :Your host is hobana.freenode.net[62.231.75.133/6667], running version ircd-seven-1.1.3
+        :hobana.freenode.net 461 Au3Bot PING :Not enough parameters
 
-:Chip!Chip@OMN-8243F63D.dsl.bell.ca PRIVMSG Bob :Hey Bob!
-Would be a Personal Message from Chip to Bob saying 'Hey Bob!'
-~~~~~~~~~
+JOIN:
+    You receive this when someone, including yourself, joins a channel.
+    Check http://tools.ietf.org/html/rfc1459#section-4.2.1 and http://tools.ietf.org/html/rfc2812#section-3.2.1 for specifics
 
-~~~~MODE~~~~
-You recieve this when a mode is changed, a mode can give/take access change certain
-things like who can join a channel etc..
+    SYNTAXES:
+        :Nick!Name@Host JOIN Channel
 
-SYNTAX:
-:Nick!Name@host MODE #Channel +/- MODE (USER)
+    EXAMPLES:
+        :Au3Bot!~Au3Bot@unaffiliated/why JOIN #fcofix
 
-EXAMPLES:
-:ChanServ!services@host MODE #Chip +o Chip
-This says ChanServ (usually a service bot) has given Chip Operator access in the channel #Chip
 
-:ChanServ!services@host MODE #Chip +i
-This makes #Chip invite only, so only OPs can invite users in the channel.
+KICK:
+    You receive this when someone gets kicked (Including yourself!)
+    Check http://tools.ietf.org/html/rfc1459#section-4.2.8 and http://tools.ietf.org/html/rfc2812#section-3.2.8 for specifics
 
-:Chip!Chip@OMN-8243F63D.dsl.bell.ca MODE Chip +i
-This will make Chip invisible to WHOIS. These are usermodes.
-~~~~~~~~~
+    SYNTAXES:
+        :Nick!Name@Host KICK Channel User1 :Reason
 
-~~~~PING~~~~
-You recieves these at random to make sure your still online and
-not disconnected.
+    EXAMPLE:
+        :rcmaehl!~why@unaffiliated/why KICK #fcofix Au3Bot :No Bots Allowed
 
-SYNTAX:
-PING :Randomletters
+MODE:
+    You receive this when a user or channel mode is changed.
+    Check http://tools.ietf.org/html/rfc1459#section-4.2.3.1, http://tools.ietf.org/html/rfc1459#section-4.2.3.2,
+    http://tools.ietf.org/html/rfc2812#section-3.1.5, and http://tools.ietf.org/html/rfc2812#section-3.2.3
 
-Usually a PING has random letters that you have to respond with.
+    SYNTAXES:
+        :Nick MODE Nick :+Mode
+        :Nick MODE Nick :-Mode
+        :Nick!Name@host MODE Channel :+Mode
+        :Nick!Name@host MODE Channel :-Mode
+        :Nick!Name@host MODE Channel :+Mode User
+        :Nick!Name@host MODE Channel :-Mode User
 
-EXAMPLE:
-PING :29809dj0d
+    EXAMPLES:
+        :Au3Bot MODE Au3Bot :+i
+        :rcmaehl!~why@unaffiliated/why MODE #fcofix +s
+        :rcmaehl!~why@unaffiliated/why MODE #fcofix +o rcmaehl
+        :ChanServ!ChanServ@services. MODE #fcofix -o rcmaehl
 
-You would respond with
-PONG 29809dj0d
-~~~~~~~~~~~
 
-~~~~JOIN~~~~
-You recieve this when someone joins a channel.
+NICK:
+    You receive this when someone, including yourself, changes their nick.
+    Check http://tools.ietf.org/html/rfc1459#section-4.1.2 and http://tools.ietf.org/html/rfc2812#section-3.1.2 for specifics
 
-SYNTAX:
-:Nick!Name@Host JOIN :#Channel
+    SYNTAXES:
+        :Nick!Name@Host NICK :NewNick
 
-EXAMPLE:
-:Chip!Chip@OMN-8243F63D.dsl.bell.ca JOIN :#Chip
-This would be sent to everybody in #Chip to show that Chip has joined the channel #Chip
-~~~~~~~~~~~~~
+    EXAMPLES:
+        :rcmaehl!~why@unaffiliated/why NICK :rcmaehl2
 
-~~~~KICK~~~~
-You recieve this when someone gets kicked (Including yourself!)
+PART:
+    You receive this when someone, including yourself, parts a channel.
+    Check http://tools.ietf.org/html/rfc1459#section-4.2.2 and http://tools.ietf.org/html/rfc2812#section-3.2.2 for specifics
 
-SYNTAX:
-:Nick!Name@Host KICK #Channel User :Reason
+    SYNTAXES:
+        :Nick!Name@Host PART Channel
+        :Nick!Name@Host PART Channel :"message"
 
-EXAMPLE:
-:Chip!Name@Host KICK #Chip Bob :Talk in private
-Would kick Bob from #Chip and say 'Talk in private' in the reason
-~~~~~~~~~~~~~~
+    EXAMPLES:
+        :rcmaehl!~why@unaffiliated/why PART #fcofix
+        :rcmaehl!~why@unaffiliated/why PART #fcofix :"test message"
 
-~~~~QUIT~~~~
-You recieve this when someone disconnects from IRC.
+PING:
+    You receive this when there's been no activity on your connection to the server for a certain period of time to confirm you're still connected.
+    Check https://tools.ietf.org/html/rfc1459#section-4.6.2 and http://tools.ietf.org/html/rfc2812#section-3.7.2 for specifics
 
-SYNTAX:
-:Nick!Name@Host QUIT :Reason
+    SYNTAXES:
+        PING :Server
+        PING :RandomString
 
-EXAMPLE:
-:Chip!Chip@OMN-8243F63D.dsl.bell.ca QUIT :I'm bored
-Would be sent to everyone in the channels Chip was in to say that he left IRC because He was bored.
-~~~~~~~~~~~~~~
+    EXAMPLES:
+        PING :cameron.freenode.net
+        PING :3dS4UmiS
+
+PRIVMSG:
+    You receive this when someone has sent a message in a channel or to you personally.
+    Check http://tools.ietf.org/html/rfc1459#section-4.4.1 and http://tools.ietf.org/html/rfc2812#section-3.3.1 for specifics
+
+    SYNTAXES:
+        :Nick!Name@Host PRIVMSG Channel :Message
+        :Nick!Name@Host PRIVMSG Recipient :Message
+
+    EXAMPLES:
+        :rcmaehl!~why@unaffiliated/why PRIVMSG #Channel :test message
+        :rcmaehl!~why@unaffiliated/why PRIVMSG Au3Bot :Hi Au3bot
