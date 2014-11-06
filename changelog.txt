@@ -1,5 +1,7 @@
 Changelog:
 
+ - Nov 05 2014 : Now works again. Bunch of code changes to come.
+
  - April 16 2009 : Compiled new package for download. Still planning on finished this.
 
  - Dec 20 2007 : Added version numbering, currently released 0.2
