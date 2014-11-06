@@ -1,7 +1,6 @@
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
 #AutoIt3Wrapper_icon=trayirc.ico
 #AutoIt3Wrapper_outfile=TrayIRC.exe
-#AutoIt3Wrapper_UseAnsi=n
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 ; -----------------------------
 ; -         TrayIRC           -
@@ -44,7 +43,7 @@ $sHTML &= "<BODY>"
 $sHTML &= "</BODY>"
 $sHTML &= "</HTML>"
 
-Global $sock, $version = 0.22
+Global $sock, $version = 0.23
 Global $server = IniRead("TrayIRC.ini", "options", "Server", "irc.freenode.net")
 Global $port = 6667
 Global $nick = IniRead("TrayIRC.ini", "options", "Nickname", "")
@@ -86,8 +85,6 @@ If $server = "" Or $nick = "" Or $channel = "" Then
 	WEnd
 EndIf
 
-_IEErrorHandlerRegister()
-
 $oIE = _IECreateEmbedded()
 
 $GUI = GUICreate($channel & " on " & $server & " - TrayIRC " & $version & " (Unicode)", 600, 398, -1, -1, BitOR($GUI_SS_DEFAULT_GUI, $WS_SIZEBOX, $WS_MAXIMIZEBOX))
@@ -119,7 +116,7 @@ $sock = _IRCConnect($server, $port, $nick); Connects to IRC and Identifies its N
 
 While 1
 	$recv = TCPRecv($sock, 8192)
-	If @error Then
+	If @error and Not @error = -1 Then
 		_GUI_AddGlobalMessage("Server has disconnected... Bye :[")
 		Sleep(4000)
 		Exit
@@ -142,8 +139,7 @@ While 1
 				If $sTemp[0] >= 5 And $sTemp[3] = $nick And $sTemp[5] = $channel And StringRegExp($sData[$i], "(?i)" & StringReplace($nick, "|", "\|") & " [@%&~=] " & $channel & " :") Then
 					; This contains names of people in the channel
 					$sNameList = StringTrimLeft($sData[$i], StringInStr($sData[$i], ":"))
-					$members = StringSplit($sNameList, " ")
-					_ArrayDelete($members, 0)
+					$members = StringSplit($sNameList, " ",2)
 					_GUI_MemberListSet($members)
 				EndIf
 
@@ -152,6 +148,7 @@ While 1
 					_GUI_AddGlobalMessage("You have joined " & $channel)
 					GUICtrlSetState($InputEdit, $GUI_ENABLE)
 					GUICtrlSetState($InputEdit, $GUI_FOCUS)
+;					_GUI_AddGlobalMessage("You have connected successfully")
 					_IRCJoinChannel($sock, $channel)
 				EndIf
 
@@ -191,7 +188,6 @@ While 1
 					$element = __ArraySearch($members, $name)
 					_ArrayDelete($members, $element)
 					$message = StringTrimLeft($sData[$i], StringInStr($sData[$i], ":"))
-
 					_GUI_AddGlobalMessage($name & " quit the server: " & $message, "B05A76")
 					_GUI_MemberListSet($members)
 				EndIf
@@ -203,6 +199,10 @@ While 1
 						_ArrayAdd($members, $name)
 						_GUI_AddGlobalMessage($name & " has joined the channel.")
 						_GUI_MemberListSet($members)
+;					Else
+;						_GUI_AddGlobalMessage("You have joined " & $channel)
+;						GUICtrlSetState($InputEdit, $GUI_ENABLE)
+;						GUICtrlSetState($InputEdit, $GUI_FOCUS)
 					EndIf
 				EndIf
 
@@ -522,103 +522,117 @@ Func __ArraySearch(Const ByRef $avArray, $vWhat2Find, $iStart = 0, $iEnd = 0, $i
 	Return -1
 EndFunc   ;==>__ArraySearch
 
-#cs Reference Guide
-	
-	
-	Common recieves:
-	Nick = User who the message is from
-	Name = Settable by user, set in the USER command
-	host = ISP host
-	
-	~~~~PRIVMSG~~~~
-	You recieve this when someone has sent a message in a channel,
-	gives you there Nick, host, the channel it was said in and the message.
-	
-	SYNTAX:
-	:Nick!Name@host PRIVMSG #Channel :Message
-	
-	EXAMPLE:
-	:Chip!Chip@OMN-8243F63D.dsl.bell.ca PRIVMSG #Chip :Hey guy's
-	Would be a message from Chip to say 'Hey guy's' in the channel #Chip
-	
-	:Chip!Chip@OMN-8243F63D.dsl.bell.ca PRIVMSG Bob :Hey Bob!
-	Would be a Personal Message from Chip to Bob saying 'Hey Bob!'
-	~~~~~~~~~
-	
-	~~~~MODE~~~~
-	You recieve this when a mode is changed, a mode can give/take access change certain
-	things like who can join a channel etc..
-	
-	SYNTAX:
-	:Nick!Name@host MODE #Channel +/- MODE (USER)
-	
-	EXAMPLES:
-	:ChanServ!services@host MODE #Chip +o Chip
-	This says ChanServ (usually a service bot) has given Chip Operator access in the channel #Chip
-	
-	:ChanServ!services@host MODE #Chip +i
-	This makes #Chip invite only, so only OPs can invite users in the channel.
-	
-	:Chip!Chip@OMN-8243F63D.dsl.bell.ca MODE Chip +i
-	This will make Chip invisible to WHOIS. These are usermodes.
-	~~~~~~~~~
-	
-	~~~~PING~~~~
-	You recieves these at random to make sure your still online and
-	not disconnected.
-	
-	SYNTAX:
-	PING :Randomletters
-	
-	Usually a PING has random letters that you have to respond with.
-	
-	EXAMPLE:
-	PING :29809dj0d
-	
-	You would respond with
-	PONG 29809dj0d
-	~~~~~~~~~~~
-	
-	~~~~JOIN~~~~
-	You recieve this when someone joins a channel.
-	
-	SYNTAX:
-	:Nick!Name@Host JOIN :#Channel
-	
-	EXAMPLE:
-	:Chip!Chip@OMN-8243F63D.dsl.bell.ca JOIN :#Chip
-	This would be sent to everybody in #Chip to show that Chip has joined the channel #Chip
-	~~~~~~~~~~~~~
-	
-	~~~~KICK~~~~
-	You recieve this when someone gets kicked (Including yourself!)
-	
-	SYNTAX:
-	:Nick!Name@Host KICK #Channel User :Reason
-	
-	EXAMPLE:
-	:Chip!Name@Host KICK #Chip Bob :Talk in private
-	Would kick Bob from #Chip and say 'Talk in private' in the reason
-	~~~~~~~~~~~~~~
-	
-	~~~~QUIT~~~~
-	You recieve this when someone disconnects from IRC.
-	
-	SYNTAX:
-	:Nick!Name@Host QUIT :Reason
-	
-	EXAMPLE:
-	:Chip!Chip@OMN-8243F63D.dsl.bell.ca QUIT :I'm bored
-	Would be sent to everyone in the channels Chip was in to say that he left IRC because He was bored.
-	~~~~~~~~~~~~~~
-	
+#cs
+
+== Common Recieved Messages ==
+
+Server = Server who sent the message
+Nick = A User who the message is from
+Name = Settable by user, set in the USER command
+Host = Host Mask (Can be your IP or something that represents it)
+
+Any 3 digit Code:
+    Contains information based on various events
+    Check https://www.alien.net.au/irc/irc2numerics.html for specifics
+
+    SYNTAXES:
+        :Server ### Recipient
+        :Server ### Recipient :Info
+        :Server ### Recipient Info :Info
+
+    EXAMPLES:
+        :hobana.freenode.net 001 Au3Bot :Welcome to the freenode Internet Relay Chat Network Au3Bot
+        :hobana.freenode.net 002 Au3Bot :Your host is hobana.freenode.net[62.231.75.133/6667], running version ircd-seven-1.1.3
+        :hobana.freenode.net 461 Au3Bot PING :Not enough parameters
+
+JOIN:
+    You receive this when someone, including yourself, joins a channel.
+    Check http://tools.ietf.org/html/rfc1459#section-4.2.1 and http://tools.ietf.org/html/rfc2812#section-3.2.1 for specifics
+
+    SYNTAXES:
+        :Nick!Name@Host JOIN Channel
+
+    EXAMPLES:
+        :Au3Bot!~Au3Bot@unaffiliated/why JOIN #fcofix
+
+
+KICK:
+    You receive this when someone gets kicked (Including yourself!)
+    Check http://tools.ietf.org/html/rfc1459#section-4.2.8 and http://tools.ietf.org/html/rfc2812#section-3.2.8 for specifics
+
+    SYNTAXES:
+        :Nick!Name@Host KICK Channel User1 :Reason
+
+    EXAMPLE:
+        :rcmaehl!~why@unaffiliated/why KICK #fcofix Au3Bot :No Bots Allowed
+
+MODE:
+    You receive this when a user or channel mode is changed.
+    Check http://tools.ietf.org/html/rfc1459#section-4.2.3.1, http://tools.ietf.org/html/rfc1459#section-4.2.3.2,
+    http://tools.ietf.org/html/rfc2812#section-3.1.5, and http://tools.ietf.org/html/rfc2812#section-3.2.3
+
+    SYNTAXES:
+        :Nick MODE Nick :+Mode
+        :Nick MODE Nick :-Mode
+        :Nick!Name@host MODE Channel :+Mode
+        :Nick!Name@host MODE Channel :-Mode
+        :Nick!Name@host MODE Channel :+Mode User
+        :Nick!Name@host MODE Channel :-Mode User
+
+    EXAMPLES:
+        :Au3Bot MODE Au3Bot :+i
+        :rcmaehl!~why@unaffiliated/why MODE #fcofix +s
+        :rcmaehl!~why@unaffiliated/why MODE #fcofix +o rcmaehl
+        :ChanServ!ChanServ@services. MODE #fcofix -o rcmaehl
+
+
+NICK:
+    You receive this when someone, including yourself, changes their nick.
+    Check http://tools.ietf.org/html/rfc1459#section-4.1.2 and http://tools.ietf.org/html/rfc2812#section-3.1.2 for specifics
+
+    SYNTAXES:
+        :Nick!Name@Host NICK :NewNick
+
+    EXAMPLES:
+        :rcmaehl!~why@unaffiliated/why NICK :rcmaehl2
+
+PART:
+    You receive this when someone, including yourself, parts a channel.
+    Check http://tools.ietf.org/html/rfc1459#section-4.2.2 and http://tools.ietf.org/html/rfc2812#section-3.2.2 for specifics
+
+    SYNTAXES:
+        :Nick!Name@Host PART Channel
+        :Nick!Name@Host PART Channel :"message"
+
+    EXAMPLES:
+        :rcmaehl!~why@unaffiliated/why PART #fcofix
+        :rcmaehl!~why@unaffiliated/why PART #fcofix :"test message"
+
+PING:
+    You receive this when there's been no activity on your connection to the server for a certain period of time to confirm you're still connected.
+    Check https://tools.ietf.org/html/rfc1459#section-4.6.2 and http://tools.ietf.org/html/rfc2812#section-3.7.2 for specifics
+
+    SYNTAXES:
+        PING :Server
+        PING :RandomString
+
+    EXAMPLES:
+        PING :cameron.freenode.net
+        PING :3dS4UmiS
+
+PRIVMSG:
+    You receive this when someone has sent a message in a channel or to you personally.
+    Check http://tools.ietf.org/html/rfc1459#section-4.4.1 and http://tools.ietf.org/html/rfc2812#section-3.3.1 for specifics
+
+    SYNTAXES:
+        :Nick!Name@Host PRIVMSG Channel :Message
+        :Nick!Name@Host PRIVMSG Recipient :Message
+
+    EXAMPLES:
+        :rcmaehl!~why@unaffiliated/why PRIVMSG #Channel :test message
+        :rcmaehl!~why@unaffiliated/why PRIVMSG Au3Bot :Hi Au3bot
+
 #ce
-
-
-
-
-
-
 
 
 ;===============================================================================
