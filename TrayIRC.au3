@@ -116,7 +116,7 @@ $sock = _IRCConnect($server, $port, $nick); Connects to IRC and Identifies its N
 
 While 1
 	$recv = TCPRecv($sock, 8192)
-	If @error and Not @error = -1 Then
+	If @error Then
 		_GUI_AddGlobalMessage("Server has disconnected... Bye :[")
 		Sleep(4000)
 		Exit
@@ -310,7 +310,7 @@ EndFunc   ;==>_Opt_Accept
 
 Func _Opt_Close()
 	If MsgBox(0x24, "TrayIRC", "Are you sure you wish to close TrayIRC?") == 6 Then
-		If $sock Then _IRCQuit($sock, "TrayIRC. ©2007 Manadar.")
+		If $sock Then _IRCQuit($sock, "TrayIRC. Â©2007 Manadar.")
 		Exit
 	EndIf
 EndFunc   ;==>_Opt_Close
@@ -376,7 +376,7 @@ Func _IRC_SendMessage($msg)
 EndFunc   ;==>_IRC_SendMessage
 
 Func _GUI_Close()
-	_IRCQuit($sock, "TrayIRC. ©2007 Manadar.")
+	_IRCQuit($sock, "TrayIRC. Â©2007 Manadar.")
 	Exit
 EndFunc   ;==>_GUI_Close
 
@@ -407,7 +407,7 @@ Func _GUI_Enter()
 					If MsgBox(0x24, "TrayIRC", "Are you sure you wish to close TrayIRC?") == 6 Then
 						$msg = StringTrimLeft($text, 6)
 						If $msg = "" Then
-							_IRCQuit($sock, "TrayIRC. ©2007 Manadar.")
+							_IRCQuit($sock, "TrayIRC. Â©2007 Manadar.")
 						Else
 							_IRCQuit($sock, $msg)
 						EndIf
